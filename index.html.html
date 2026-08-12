@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>منصة الاختبارات الشاملة والذكية</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts - Cairo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- React & ReactDOM CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel Standalone -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    * { font-family: 'Cairo', sans-serif; }
+    body { background-color: #f8fafc; color: #0f172a; }
+    .animate-fade-in { animation: fadeIn 0.35s ease-out; }
+    .animate-bounce-short { animation: bounce 1s ease-in-out infinite; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
+
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- Icons Components ---
+    const IconPlus = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+    const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;
+    const IconEdit = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;
+    const IconPlay = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>;
+    const IconHome = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>;
+    const IconSave = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>;
+    const IconClock = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>;
+    const IconUser = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
+    const IconBarChart = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>;
+    const IconBrain = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04Z"></path><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04Z"></path></svg>;
+    const IconCheck = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>;
+    const IconCross = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
+    const IconChevronDown = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>;
+    const IconChevronUp = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>;
+    const IconRotateCcw = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>;
+
+    const generateId = () => Math.random().toString(36).substr(2, 9);
+    const STORAGE_KEY = 'multi_type_quizzes_app_data_v2';
+
+    // --- Default Sample Quizzes (1 of each type) ---
+    const DEFAULT_QUIZZES = [
+      {
+        id: 'sample-personality-1',
+        type: 'personality',
+        title: 'أي نوع من القهوة أنت؟ ☕',
+        description: 'اكتشف شخصيتك وطبيعتك من خلال نوع القهوة المفضل لديك وبصمتك اليومية.',
+        outcomes: [
+          { id: 'o1', title: 'قهوة اسبريسو مركزة', imageUrl: 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?auto=format&fit=crop&q=80&w=600', description: 'أنت شخص عملي، مباشر، ومليء بالطاقة. تحب حسم الأمور وتكره إضاعة الوقت.' },
+          { id: 'o2', title: 'كابتشينو دافئ', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf0b63f520?auto=format&fit=crop&q=80&w=600', description: 'أنت شخص دافئ، تحب التوازن وتستمتع بالتفاصيل الجميلة والحوارات العميق.' },
+          { id: 'o3', title: 'سبانيش لاتيه مثلج', imageUrl: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&q=80&w=600', description: 'أنت شخص عصري، هادئ الأعصاب، تتكيف بسهولة وتحب الاستمتاع بالحياة.' }
+        ],
+        questions: [
+          {
+            id: 'q1', text: 'كيف تبدأ صباحك في اليوم المثالي؟', imageUrl: '',
+            options: [
+              { id: 'opt1-1', text: 'أستيقظ مبكراً وأنجز مهامي فوراً', weight: 'o1' },
+              { id: 'opt1-2', text: 'أستمع لموسيقى هادئة وأتأمل', weight: 'o2' },
+              { id: 'opt1-3', text: 'أتصفح هاتفي بكل هدوء وبدون استعجال', weight: 'o3' }
+            ]
+          },
+          {
+            id: 'q2', text: 'اختر بيئة العمل الفضلى بالنسبة لك:', imageUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=600',
+            options: [
+              { id: 'opt2-1', text: 'مكتب هادئ منظم لإنتاجية قصوى', weight: 'o1' },
+              { id: 'opt2-2', text: 'مقهى دافئ بأجواء مريحة', weight: 'o2' },
+              { id: 'opt2-3', text: 'مساحة مفتوحة على البحر أو في الهواء الطلق', weight: 'o3' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'sample-scale-1',
+        type: 'scale',
+        title: 'مقياس التوافق مع العمل عن بُعد 💻',
+        description: 'اختبر نسبة ملاءمتك للعمل من المنزل والانضباط الذاتي بعيداً عن المكاتب التقليدية.',
+        ranges: [
+          { minPercent: 0, maxPercent: 40, title: 'توافق منخفض (تفضل البيئة المكتبيّة)', description: 'أنت تزدهر بالتواصل المباشر والالتزام البيئي الدقيق، وقد تجد صعوبة في عزل الملهيات في المنزل.', colorClass: 'from-amber-500 to-red-500' },
+          { minPercent: 41, maxPercent: 75, title: 'توافق متوسط (نمط هجين مثالي)', description: 'تستطيع التكيف مع العمل عن بُعد، ولكنك تفضل التنوع والجمع بين العمل المكتبي والمنزلي.', colorClass: 'from-blue-500 to-indigo-500' },
+          { minPercent: 76, maxPercent: 100, title: 'توافق ممتاز! (محترف عمل عن بُعد)', description: 'تمتلك انضباطاً ذاتياً واستقلالية فائقة تجعل العمل المرن بيئة إبداعك الحقيقية.', colorClass: 'from-emerald-500 to-teal-500' }
+        ],
+        questions: [
+          {
+            id: 'sq1', text: 'ما مدى قدرتك على تنظيم جدولك دون إشراف؟',
+            options: [
+              { id: 'sopt1-1', text: 'عالية جداً، أصنع قائمة وألتزم بها', points: 5 },
+              { id: 'sopt1-2', text: 'متوسطة، أحتاج بعض التذكيرات', points: 3 },
+              { id: 'sopt1-3', text: 'أواجه صعوبة وتشتتاً بمفردي', points: 1 }
+            ]
+          },
+          {
+            id: 'sq2', text: 'كيف تتعامل مع ملهيات المنزل أثناء الدوام؟',
+            options: [
+              { id: 'sopt2-1', text: 'أعزل نفسي تماماً في مكان خاص', points: 5 },
+              { id: 'sopt2-2', text: 'أحاول التجاهل ولكن ينخفض تركيزي أحياناً', points: 3 },
+              { id: 'sopt2-3', text: 'أتشتت بسهولة كبيرة', points: 1 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'sample-trivia-1',
+        type: 'trivia',
+        title: 'تحدي المعلومات العامة والتكنولوجيا ⚡',
+        description: 'اختبر سرعتك وذكاءك بحل الأسئلة خلال 15 ثانية لكل سؤال!',
+        timerPerQuestion: 15,
+        questions: [
+          {
+            id: 'tq1', text: 'ما هي عاصمة التكنولوجيا المشهورة في كاليفورنيا؟', imageUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=600',
+            correctOptionId: 'topt1-2',
+            explanation: 'وادي السيليكون (Silicon Valley) هو المركز العالمي للابتكار والشركات التقنية.',
+            options: [
+              { id: 'topt1-1', text: 'نيويورك' },
+              { id: 'topt1-2', text: 'وادي السيليكون' },
+              { id: 'topt1-3', text: 'شيكاغو' },
+              { id: 'topt1-4', text: 'واشنطن' }
+            ]
+          },
+          {
+            id: 'tq2', text: 'ما لغة البرمجة الأكثر استخداماً لبناء واجهات الويب التفاعلية؟',
+            correctOptionId: 'topt2-3',
+            explanation: 'جافاسكريبت (JavaScript) هي لغة التفاعل الأساسية لجميع متصفحات الويب.',
+            options: [
+              { id: 'topt2-1', text: 'C++' },
+              { id: 'topt2-2', text: 'Python' },
+              { id: 'topt2-3', text: 'JavaScript' },
+              { id: 'topt2-4', text: 'SQL' }
+            ]
+          }
+        ]
+      }
+    ];
+
+    function App() {
+      const [quizzes, setQuizzes] = useState([]);
+      const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'creator', 'player', 'results'
+      const [activeCategory, setActiveCategory] = useState('all'); // 'all', 'personality', 'scale', 'trivia'
+      const [editingQuiz, setEditingQuiz] = useState(null);
+      const [activeQuiz, setActiveQuiz] = useState(null);
+      const [quizResultData, setQuizResultData] = useState(null);
+
+      // Custom Confirmation Modal State
+      const [deleteModalQuizId, setDeleteModalQuizId] = useState(null);
+
+      useEffect(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          try {
+            setQuizzes(JSON.parse(saved));
+          } catch(e) {
+            setQuizzes(DEFAULT_QUIZZES);
+          }
+        } else {
+          setQuizzes(DEFAULT_QUIZZES);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_QUIZZES));
+        }
+      }, []);
+
+      const saveQuizzesToStorage = (updatedList) => {
+        setQuizzes(updatedList);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
+      };
+
+      const handleConfirmDelete = () => {
+        if (!deleteModalQuizId) return;
+        const updated = quizzes.filter(q => q.id !== deleteModalQuizId);
+        saveQuizzesToStorage(updated);
+        setDeleteModalQuizId(null);
+      };
+
+      const handleStartCreate = () => {
+        setEditingQuiz(null);
+        setCurrentScreen('creator');
+      };
+
+      const handleStartEdit = (quiz) => {
+        setEditingQuiz(quiz);
+        setCurrentScreen('creator');
+      };
+
+      const handleStartPlay = (quiz) => {
+        setActiveQuiz(quiz);
+        setCurrentScreen('player');
+      };
+
+      const handleFinishQuiz = (resultData) => {
+        setQuizResultData(resultData);
+        setCurrentScreen('results');
+      };
+
+      const handleGoHome = () => {
+        setCurrentScreen('home');
+        setActiveQuiz(null);
+        setEditingQuiz(null);
+        setQuizResultData(null);
+      };
+
+      // --- HOME SCREEN ---
+      const HomeScreen = () => {
+        const filteredQuizzes = quizzes.filter(q => {
+          if (activeCategory === 'all') return true;
+          return q.type === activeCategory;
+        });
+
+        const getTypeBadge = (type) => {
+          switch(type) {
+            case 'personality':
+              return <span className="bg-purple-100 text-purple-700 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1"><IconUser /> شخصية</span>;
+            case 'scale':
+              return <span className="bg-teal-100 text-teal-700 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1"><IconBarChart /> نسبة وتوافق</span>;
+            case 'trivia':
+              return <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1"><IconBrain /> معلومات وسرعة</span>;
+            default:
+              return null;
+          }
+        };
+
+        return (
+          <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
+            {/* Header Banner */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-gradient-to-r from-indigo-700 via-indigo-600 to-purple-700 text-white p-6 sm:p-8 rounded-3xl shadow-xl">
+              <div>
+                <span className="bg-white/20 text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">صانع الاختبارات الشامل</span>
+                <h1 className="text-3xl sm:text-4xl font-black mb-2">منصة الاختبارات التفاعلية</h1>
+                <p className="text-indigo-100 text-sm sm:text-base max-w-xl">اصنع واختبر نفسك بأرقى الاختبارات: تحليل الشخصية، مقاييس النسبة والتوافق، مسابقات المعلومات الموقوتة!</p>
+              </div>
+              <button 
+                onClick={handleStartCreate}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-3.5 rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 flex items-center gap-2 shrink-0 border border-emerald-400"
+              >
+                <IconPlus />
+                <span>إنشاء اختبار جديد</span>
+              </button>
+            </div>
+
+            {/* Categorization Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">
+              <button 
+                onClick={() => setActiveCategory('all')}
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeCategory === 'all' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+              >
+                الكل ({quizzes.length})
+              </button>
+              <button 
+                onClick={() => setActiveCategory('personality')}
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${activeCategory === 'personality' ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+              >
+                <IconUser /> اختبارات الشخصية ({quizzes.filter(q => q.type==='personality').length})
+              </button>
+              <button 
+                onClick={() => setActiveCategory('scale')}
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${activeCategory === 'scale' ? 'bg-teal-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+              >
+                <IconBarChart /> النسبة والتوافق ({quizzes.filter(q => q.type==='scale').length})
+              </button>
+              <button 
+                onClick={() => setActiveCategory('trivia')}
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${activeCategory === 'trivia' ? 'bg-amber-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+              >
+                <IconBrain /> المعلومات والذكاء ({quizzes.filter(q => q.type==='trivia').length})
+              </button>
+            </div>
+
+            {/* Quizzes Grid */}
+            {filteredQuizzes.length === 0 ? (
+              <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm">
+                <div className="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <IconBrain />
+                </div>
+                <h3 className="text-xl font-bold text-slate-700 mb-2">لا توجد اختبارات في هذا القسم</h3>
+                <p className="text-slate-500 text-sm mb-6">كن الأول بإنشاء اختبار ممتع ومشاركته في هذا القسم!</p>
+                <button onClick={handleStartCreate} className="bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl shadow">
+                  إنشاء اختبار الآن
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredQuizzes.map((quiz) => (
+                  <div key={quiz.id} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all flex flex-col justify-between relative group">
+                    <div>
+                      <div className="flex justify-between items-start mb-3">
+                        {getTypeBadge(quiz.type)}
+                        <span className="text-xs text-slate-400 font-semibold bg-slate-100 px-2.5 py-1 rounded-lg">
+                          {quiz.questions ? quiz.questions.length : 0} أسئلة
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">{quiz.title}</h3>
+                      <p className="text-slate-500 text-sm line-clamp-2 mb-6 min-h-[40px]">{quiz.description || 'لا يوجد وصف محدد لهذا الاختبار.'}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                      <button 
+                        onClick={() => handleStartPlay(quiz)}
+                        className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-xl text-sm flex items-center gap-1.5 transition-colors"
+                      >
+                        <IconPlay /> بدء الاختبار
+                      </button>
+
+                      <div className="flex items-center gap-1">
+                        <button 
+                          onClick={() => handleStartEdit(quiz)}
+                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          title="تعديل الاختبار"
+                        >
+                          <IconEdit />
+                        </button>
+                        <button 
+                          onClick={() => setDeleteModalQuizId(quiz.id)}
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="حذف الاختبار"
+                        >
+                          <IconTrash />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      // --- CREATOR STUDIO SCREEN ---
+      const CreatorScreen = () => {
+        const [quizType, setQuizType] = useState(editingQuiz ? editingQuiz.type : 'personality');
+        const [title, setTitle] = useState(editingQuiz ? editingQuiz.title : '');
+        const [description, setDescription] = useState(editingQuiz ? editingQuiz.description : '');
+        const [timerPerQuestion, setTimerPerQuestion] = useState(editingQuiz && editingQuiz.timerPerQuestion ? editingQuiz.timerPerQuestion : 20);
+
+        // Outcomes for Personality Quiz
+        const [outcomes, setOutcomes] = useState(editingQuiz && editingQuiz.outcomes ? editingQuiz.outcomes : [
+          { id: generateId(), title: '', imageUrl: '', description: '', isOpen: true }
+        ]);
+
+        // Ranges for Scale Quiz
+        const [ranges, setRanges] = useState(editingQuiz && editingQuiz.ranges ? editingQuiz.ranges : [
+          { minPercent: 0, maxPercent: 50, title: 'نسبة متوسطة', description: 'توضح النتائج تحيزاً متوازناً.', colorClass: 'from-blue-500 to-indigo-500' },
+          { minPercent: 51, maxPercent: 100, title: 'نسبة مرتفعة جداً!', description: 'أداء ممتاز وتوافق استثنائي.', colorClass: 'from-emerald-500 to-teal-500' }
+        ]);
+
+        // Questions Array
+        const [questions, setQuestions] = useState(editingQuiz && editingQuiz.questions ? editingQuiz.questions : [
+          { 
+            id: generateId(), text: '', imageUrl: '', correctOptionId: '', explanation: '', isOpen: true,
+            options: [
+              { id: generateId(), text: '', imageUrl: '', weight: '', points: 3 },
+              { id: generateId(), text: '', imageUrl: '', weight: '', points: 1 }
+            ] 
+          }
+        ]);
+
+        const [validationError, setValidationError] = useState('');
+
+        const handleSaveQuiz = () => {
+          setValidationError('');
+          if (!title.trim()) { setValidationError('يرجى إدخال عنوان الاختبار الرئيسي.'); return; }
+
+          if (quizType === 'personality') {
+            if (outcomes.length === 0) { setValidationError('يجب إضافة نتيجة (شخصية) واحدة على الأقل.'); return; }
+            for (let o of outcomes) {
+              if (!o.title.trim()) { setValidationError('يرجى إدخال اسم لكل نتيجة أو شخصية.'); return; }
+            }
+          }
+
+          if (questions.length === 0) { setValidationError('يرجى إضافة سؤال واحد على الأقل للاختبار.'); return; }
+          for (let q of questions) {
+            if (!q.text.trim()) { setValidationError('يرجى إدخال نص لجميع الأسئلة.'); return; }
+            if (q.options.length < 2) { setValidationError('يجب أن يحتوي كل سؤال على خيارين على الأقل.'); return; }
+            for (let opt of q.options) {
+              if (!opt.text.trim()) { setValidationError('يرجى ملء كافة نصوص خيارات الإجابة.'); return; }
+              if (quizType === 'personality' && !opt.weight) {
+                setValidationError('يرجى ربط كل خيار بالشخصية المناسبة له في اختبارات الشخصية.'); return;
+              }
+            }
+            if (quizType === 'trivia' && !q.correctOptionId) {
+              setValidationError('يرجى تحديد الإجابة الصحيحة لكل سؤال في اختبار المعلومات.'); return;
+            }
+          }
+
+          const updatedQuizData = {
+            id: editingQuiz ? editingQuiz.id : generateId(),
+            type: quizType,
+            title,
+            description,
+            timerPerQuestion: quizType === 'trivia' ? parseInt(timerPerQuestion) : undefined,
+            outcomes: quizType === 'personality' ? outcomes : undefined,
+            ranges: quizType === 'scale' ? ranges : undefined,
+            questions
+          };
+
+          let updatedList;
+          if (editingQuiz) {
+            updatedList = quizzes.map(q => q.id === editingQuiz.id ? updatedQuizData : q);
+          } else {
+            updatedList = [updatedQuizData, ...quizzes];
+          }
+
+          saveQuizzesToStorage(updatedList);
+          handleGoHome();
+        };
+
+        return (
+          <div className="max-w-4xl mx-auto px-4 py-8 animate-fade-in pb-24">
+            <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm sticky top-4 z-20">
+              <div className="flex items-center gap-3">
+                <button onClick={handleGoHome} className="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 transition-colors">
+                  <IconHome />
+                </button>
+                <h2 className="text-xl font-bold text-slate-800">
+                  {editingQuiz ? 'تعديل الاختبار' : 'إنشاء اختبار جديد'}
+                </h2>
+              </div>
+              <button 
+                onClick={handleSaveQuiz}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all"
+              >
+                <IconSave />
+                <span>حفظ الاختبار</span>
+              </button>
+            </div>
+
+            {validationError && (
+              <div className="bg-red-50 border-r-4 border-red-500 p-4 mb-6 rounded-l-xl text-red-700 font-bold text-sm">
+                ⚠️ {validationError}
+              </div>
+            )}
+
+            {/* Type Selector (Only if Creating New) */}
+            {!editingQuiz && (
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6">
+                <label className="block text-sm font-bold text-slate-700 mb-3">1. اختر نوع الاختبار المراد إنشاؤه:</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div 
+                    onClick={() => setQuizType('personality')}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center text-center ${quizType === 'personality' ? 'border-purple-600 bg-purple-50/50' : 'border-slate-200 hover:border-slate-300'}`}
+                  >
+                    <div className="p-3 bg-purple-100 text-purple-700 rounded-xl mb-2"><IconUser /></div>
+                    <div className="font-bold text-slate-800 text-sm mb-1">اختبار الشخصية</div>
+                    <div className="text-xs text-slate-500">يربط إجابات المستخدم بشخصية أو نتيجة محددة.</div>
+                  </div>
+
+                  <div 
+                    onClick={() => setQuizType('scale')}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center text-center ${quizType === 'scale' ? 'border-teal-600 bg-teal-50/50' : 'border-slate-200 hover:border-slate-300'}`}
+                  >
+                    <div className="p-3 bg-teal-100 text-teal-700 rounded-xl mb-2"><IconBarChart /></div>
+                    <div className="font-bold text-slate-800 text-sm mb-1">النسبة والتوافق</div>
+                    <div className="text-xs text-slate-500">يحسب نقاط الخيارات ويظهر نسبة مئوية وشريط تقدم.</div>
+                  </div>
+
+                  <div 
+                    onClick={() => setQuizType('trivia')}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center text-center ${quizType === 'trivia' ? 'border-amber-600 bg-amber-50/50' : 'border-slate-200 hover:border-slate-300'}`}
+                  >
+                    <div className="p-3 bg-amber-100 text-amber-700 rounded-xl mb-2"><IconBrain /></div>
+                    <div className="font-bold text-slate-800 text-sm mb-1">المعلومات والذكاء</div>
+                    <div className="text-xs text-slate-500">إجابات صحيحة وخاطئة مع مؤقت زمني تنازلي.</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Basic Info Block */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6 space-y-4">
+              <h3 className="font-bold text-slate-800 text-base border-b pb-3">المعلومات الأساسية</h3>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">عنوان الاختبار *</label>
+                <input 
+                  type="text" 
+                  value={title} 
+                  onChange={e => setTitle(e.target.value)}
+                  placeholder="مثال: اختبر نسبة ذكائك العاطفي..." 
+                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">وصف الاختبار (اختياري)</label>
+                <textarea 
+                  value={description} 
+                  onChange={e => setDescription(e.target.value)}
+                  placeholder="اكتب نبذة مشوقة تشرح فكرة الاختبار..." 
+                  rows="2"
+                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                ></textarea>
+              </div>
+
+              {quizType === 'trivia' && (
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">⏱️ زمن السؤال بالمؤقت (بالثواني)</label>
+                  <select 
+                    value={timerPerQuestion}
+                    onChange={e => setTimerPerQuestion(e.target.value)}
+                    className="p-3 border border-slate-300 rounded-xl bg-slate-50 font-bold text-slate-700 text-sm outline-none focus:ring-2 focus:ring-amber-500"
+                  >
+                    <option value="10">10 ثوانٍ لكل سؤال (سريع جداً)</option>
+                    <option value="15">15 ثانية لكل سؤال</option>
+                    <option value="20">20 ثانية لكل سؤال (مستحسن)</option>
+                    <option value="30">30 ثانية لكل سؤال</option>
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Personality Outcomes Section */}
+            {quizType === 'personality' && (
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6">
+                <div className="flex justify-between items-center mb-4 border-b pb-3">
+                  <h3 className="font-bold text-slate-800">الشخصيات / النتائج المحتملة</h3>
+                  <button 
+                    onClick={() => setOutcomes([...outcomes, { id: generateId(), title: '', imageUrl: '', description: '', isOpen: true }])}
+                    className="text-purple-700 bg-purple-50 hover:bg-purple-100 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1"
+                  >
+                    <IconPlus /> إضافة شخصية
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {outcomes.map((o, idx) => (
+                    <div key={o.id} className="border border-purple-100 rounded-xl bg-purple-50/30 overflow-hidden">
+                      <div className="p-3 bg-purple-100/60 flex justify-between items-center font-bold text-purple-900 text-sm">
+                        <span>نتيجة ({idx+1}): {o.title || 'بدون عنوان'}</span>
+                        <button 
+                          onClick={() => setOutcomes(outcomes.filter(item => item.id !== o.id))}
+                          className="text-red-500 hover:bg-red-100 p-1 rounded"
+                        >
+                          <IconTrash />
+                        </button>
+                      </div>
+                      <div className="p-4 space-y-3">
+                        <input 
+                          type="text" 
+                          value={o.title} 
+                          onChange={e => setOutcomes(outcomes.map(item => item.id === o.id ? {...item, title: e.target.value} : item))}
+                          placeholder="اسم الشخصية (مثال: الشخصية القيادية)" 
+                          className="w-full p-2.5 border border-slate-300 rounded-lg text-sm"
+                        />
+                        <input 
+                          type="text" 
+                          value={o.imageUrl} 
+                          onChange={e => setOutcomes(outcomes.map(item => item.id === o.id ? {...item, imageUrl: e.target.value} : item))}
+                          placeholder="رابط صورة الشخصية (اختياري)" 
+                          className="w-full p-2.5 border border-slate-300 rounded-lg text-sm" dir="ltr"
+                        />
+                        <textarea 
+                          value={o.description} 
+                          onChange={e => setOutcomes(outcomes.map(item => item.id === o.id ? {...item, description: e.target.value} : item))}
+                          placeholder="وصف تفصيلي للشخصية يظهر في النتيجة النهاية..." 
+                          rows="2" 
+                          className="w-full p-2.5 border border-slate-300 rounded-lg text-sm"
+                        ></textarea>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Questions Section */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6">
+              <div className="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 className="font-bold text-slate-800">الأسئلة والإجابات</h3>
+                <button 
+                  onClick={() => setQuestions([...questions, { 
+                    id: generateId(), text: '', imageUrl: '', correctOptionId: '', explanation: '', isOpen: true,
+                    options: [{ id: generateId(), text: '', points: 3 }, { id: generateId(), text: '', points: 1 }] 
+                  }])}
+                  className="text-indigo-700 bg-indigo-50 hover:bg-indigo-100 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1"
+                >
+                  <IconPlus /> إضافة سؤال
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {questions.map((q, qIndex) => (
+                  <div key={q.id} className="border-2 border-slate-200 rounded-2xl overflow-hidden bg-slate-50/50">
+                    <div className="p-4 bg-slate-100 flex justify-between items-center font-bold text-slate-800 text-sm">
+                      <span>السؤال {qIndex + 1}: {q.text || '(بدون عنوان)'}</span>
+                      <button 
+                        onClick={() => setQuestions(questions.filter(item => item.id !== q.id))}
+                        className="text-red-500 hover:bg-red-100 p-1.5 rounded-lg"
+                      >
+                        <IconTrash />
+                      </button>
+                    </div>
+
+                    <div className="p-4 space-y-4">
+                      <input 
+                        type="text" 
+                        value={q.text} 
+                        onChange={e => setQuestions(questions.map(item => item.id === q.id ? {...item, text: e.target.value} : item))}
+                        placeholder="نص السؤال هنا..." 
+                        className="w-full p-3 border border-slate-300 rounded-xl text-sm font-semibold bg-white"
+                      />
+
+                      {quizType === 'trivia' && (
+                        <input 
+                          type="text" 
+                          value={q.explanation} 
+                          onChange={e => setQuestions(questions.map(item => item.id === q.id ? {...item, explanation: e.target.value} : item))}
+                          placeholder="توضيح أو معلومة إضافية عند معرفة الإجابة (اختياري)..." 
+                          className="w-full p-2.5 border border-slate-200 rounded-xl text-xs bg-amber-50/40"
+                        />
+                      )}
+
+                      {/* Options List */}
+                      <div className="space-y-2 pt-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-600">خيارات الإجابة:</span>
+                          <button 
+                            onClick={() => {
+                              const updatedOptions = [...q.options, { id: generateId(), text: '', points: 1 }];
+                              setQuestions(questions.map(item => item.id === q.id ? {...item, options: updatedOptions} : item));
+                            }}
+                            className="text-indigo-600 text-xs font-bold hover:underline"
+                          >
+                            + إضافة خيار
+                          </button>
+                        </div>
+
+                        {q.options.map((opt, optIndex) => (
+                          <div key={opt.id} className="flex flex-col sm:flex-row items-center gap-2 p-3 bg-white border border-slate-200 rounded-xl">
+                            <input 
+                              type="text" 
+                              value={opt.text} 
+                              onChange={e => {
+                                const newOpts = q.options.map(o => o.id === opt.id ? {...o, text: e.target.value} : o);
+                                setQuestions(questions.map(item => item.id === q.id ? {...item, options: newOpts} : item));
+                              }}
+                              placeholder={`الخيار (${optIndex + 1})`} 
+                              className="flex-1 p-2 border border-slate-200 rounded-lg text-sm w-full"
+                            />
+
+                            {/* Weight/Points Mapping based on Type */}
+                            {quizType === 'personality' && (
+                              <select 
+                                value={opt.weight || ''}
+                                onChange={e => {
+                                  const newOpts = q.options.map(o => o.id === opt.id ? {...o, weight: e.target.value} : o);
+                                  setQuestions(questions.map(item => item.id === q.id ? {...item, options: newOpts} : item));
+                                }}
+                                className="p-2 border border-purple-200 bg-purple-50 text-purple-900 rounded-lg text-xs font-bold w-full sm:w-auto"
+                              >
+                                <option value="" disabled>اختر الشخصية...</option>
+                                {outcomes.map(o => <option key={o.id} value={o.id}>{o.title || 'شخصية بدون عنوان'}</option>)}
+                              </select>
+                            )}
+
+                            {quizType === 'scale' && (
+                              <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <span className="text-xs text-slate-500 font-bold whitespace-nowrap">النقاط:</span>
+                                <input 
+                                  type="number" 
+                                  min="1" 
+                                  max="10" 
+                                  value={opt.points || 1}
+                                  onChange={e => {
+                                    const newOpts = q.options.map(o => o.id === opt.id ? {...o, points: parseInt(e.target.value) || 1} : o);
+                                    setQuestions(questions.map(item => item.id === q.id ? {...item, options: newOpts} : item));
+                                  }}
+                                  className="w-16 p-2 border border-teal-200 bg-teal-50 text-teal-900 font-bold rounded-lg text-xs text-center"
+                                />
+                              </div>
+                            )}
+
+                            {quizType === 'trivia' && (
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  setQuestions(questions.map(item => item.id === q.id ? {...item, correctOptionId: opt.id} : item));
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all w-full sm:w-auto flex items-center justify-center gap-1 ${q.correctOptionId === opt.id ? 'bg-emerald-600 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                              >
+                                {q.correctOptionId === opt.id ? <><IconCheck /> الإجابة الصحيحة</> : 'تحديد كإجابة صحيحة'}
+                              </button>
+                            )}
+
+                            <button 
+                              onClick={() => {
+                                const newOpts = q.options.filter(o => o.id !== opt.id);
+                                setQuestions(questions.map(item => item.id === q.id ? {...item, options: newOpts} : item));
+                              }}
+                              className="text-slate-400 hover:text-red-500 p-1.5"
+                            >
+                              <IconTrash />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // --- PLAYER SCREEN ---
+      const PlayerScreen = () => {
+        const quiz = activeQuiz;
+        const [currentIndex, setCurrentIndex] = useState(0);
+        const [userAnswers, setUserAnswers] = useState([]); // Stores chosen option objects or IDs
+        const [timeLeft, setTimeLeft] = useState(quiz.timerPerQuestion || 20);
+
+        const currentQuestion = quiz.questions[currentIndex];
+
+        // Timer effect for Trivia type
+        useEffect(() => {
+          if (quiz.type !== 'trivia') return;
+          setTimeLeft(quiz.timerPerQuestion || 20);
+
+          const timer = setInterval(() => {
+            setTimeLeft(prev => {
+              if (prev <= 1) {
+                // Auto timeout -> Record empty selection & advance
+                handleSelectOption(null);
+                return quiz.timerPerQuestion || 20;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+
+          return () => clearInterval(timer);
+        }, [currentIndex, quiz]);
+
+        const handleSelectOption = (option) => {
+          const updatedAnswers = [...userAnswers, { questionId: currentQuestion.id, selectedOption: option }];
+          setUserAnswers(updatedAnswers);
+
+          if (currentIndex < quiz.questions.length - 1) {
+            setCurrentIndex(currentIndex + 1);
+          } else {
+            // Process and calculate final results
+            calculateResults(updatedAnswers);
+          }
+        };
+
+        const calculateResults = (allAnswers) => {
+          if (quiz.type === 'personality') {
+            const counts = {};
+            allAnswers.forEach(ans => {
+              if (ans.selectedOption && ans.selectedOption.weight) {
+                const w = ans.selectedOption.weight;
+                counts[w] = (counts[w] || 0) + 1;
+              }
+            });
+            let winningOutcomeId = null;
+            let maxCount = -1;
+            Object.keys(counts).forEach(id => {
+              if (counts[id] > maxCount) {
+                maxCount = counts[id];
+                winningOutcomeId = id;
+              }
+            });
+            const winningOutcome = quiz.outcomes.find(o => o.id === winningOutcomeId) || quiz.outcomes[0];
+            handleFinishQuiz({ type: 'personality', outcome: winningOutcome });
+          } else if (quiz.type === 'scale') {
+            let totalEarned = 0;
+            let totalMax = 0;
+            quiz.questions.forEach((q, i) => {
+              const maxOptionPoints = Math.max(...q.options.map(o => o.points || 1));
+              totalMax += maxOptionPoints;
+              const ans = allAnswers[i];
+              if (ans && ans.selectedOption) {
+                totalEarned += (ans.selectedOption.points || 1);
+              }
+            });
+            const percent = Math.round((totalEarned / (totalMax || 1)) * 100);
+            const matchedRange = quiz.ranges ? quiz.ranges.find(r => percent >= r.minPercent && percent <= r.maxPercent) : null;
+            handleFinishQuiz({ type: 'scale', percent, range: matchedRange || { title: 'نتيجة التوافق', description: '' } });
+          } else if (quiz.type === 'trivia') {
+            let correctCount = 0;
+            const reviewList = quiz.questions.map((q, i) => {
+              const ans = allAnswers[i];
+              const isCorrect = ans && ans.selectedOption && ans.selectedOption.id === q.correctOptionId;
+              if (isCorrect) correctCount++;
+              const correctOpt = q.options.find(o => o.id === q.correctOptionId);
+              return {
+                questionText: q.text,
+                userAnswerText: ans && ans.selectedOption ? ans.selectedOption.text : 'لم يتم الإجابة (انتهى الوقت ⏱️)',
+                correctAnswerText: correctOpt ? correctOpt.text : '',
+                isCorrect,
+                explanation: q.explanation
+              };
+            });
+            handleFinishQuiz({
+              type: 'trivia',
+              score: correctCount,
+              total: quiz.questions.length,
+              percent: Math.round((correctCount / quiz.questions.length) * 100),
+              reviewList
+            });
+          }
+        };
+
+        const progressPercent = Math.round(((currentIndex) / quiz.questions.length) * 100);
+
+        return (
+          <div className="min-h-screen bg-slate-900 text-white flex flex-col justify-between p-4 sm:p-6 animate-fade-in">
+            {/* Top Bar & Progress */}
+            <div className="max-w-2xl mx-auto w-full pt-4">
+              <div className="flex items-center justify-between mb-3 text-slate-400 text-xs font-bold">
+                <button onClick={handleGoHome} className="hover:text-white flex items-center gap-1 bg-slate-800 px-3 py-1.5 rounded-lg">
+                  <IconHome /> خروج
+                </button>
+                <span>السؤال {currentIndex + 1} من {quiz.questions.length}</span>
+              </div>
+              <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                <div className="bg-indigo-500 h-full transition-all duration-300" style={{ width: `${progressPercent}%` }}></div>
+              </div>
+
+              {/* Timer Bar for Trivia */}
+              {quiz.type === 'trivia' && (
+                <div className="mt-4 flex items-center justify-between bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                  <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                    <IconClock /> <span>الزمن المتبقي:</span>
+                  </div>
+                  <span className={`text-xl font-black ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : 'text-amber-400'}`}>
+                    {timeLeft} ثانية
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Question Card */}
+            <div className="max-w-2xl mx-auto w-full my-auto py-8">
+              <div className="bg-slate-800 border border-slate-700 p-6 sm:p-8 rounded-3xl shadow-2xl">
+                <h2 className="text-xl sm:text-2xl font-bold text-center text-white mb-8 leading-relaxed">
+                  {currentQuestion.text}
+                </h2>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {currentQuestion.options.map((opt) => (
+                    <button 
+                      key={opt.id} 
+                      onClick={() => handleSelectOption(opt)}
+                      className="w-full p-4 bg-slate-700 hover:bg-indigo-600 text-white rounded-2xl font-bold text-base transition-all transform hover:-translate-y-0.5 text-right flex items-center justify-between border border-slate-600 hover:border-indigo-400 shadow-md"
+                    >
+                      <span>{opt.text}</span>
+                      <span className="w-6 h-6 rounded-full border-2 border-slate-500 flex items-center justify-center text-xs"></span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center text-xs text-slate-500 pb-4">
+              منصة الاختبارات التفاعلية • إجابتك تُحسب تلقائياً
+            </div>
+          </div>
+        );
+      };
+
+      // --- RESULTS SCREEN ---
+      const ResultsScreen = () => {
+        const res = quizResultData;
+        if (!res) return null;
+
+        return (
+          <div className="min-h-screen bg-slate-50 p-4 sm:p-8 flex flex-col items-center justify-center animate-fade-in">
+            <div className="bg-white max-w-2xl w-full rounded-3xl shadow-xl border border-slate-200 overflow-hidden text-center">
+              
+              {/* Personality Result View */}
+              {res.type === 'personality' && (
+                <div>
+                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-8 text-white">
+                    <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold">شخصيتك هي</span>
+                    <h1 className="text-3xl sm:text-4xl font-black mt-2">{res.outcome.title}</h1>
+                  </div>
+                  {res.outcome.imageUrl && (
+                    <img src={res.outcome.imageUrl} alt={res.outcome.title} className="w-full h-64 object-cover" />
+                  )}
+                  <div className="p-8">
+                    <p className="text-slate-600 text-lg leading-relaxed mb-8">{res.outcome.description}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Scale Result View */}
+              {res.type === 'scale' && (
+                <div className="p-8">
+                  <span className="bg-teal-100 text-teal-800 text-xs font-black px-4 py-1.5 rounded-full uppercase">درجة التوافق والنسبة المئوية</span>
+                  
+                  {/* Circular Score Badge */}
+                  <div className="my-8">
+                    <div className="text-6xl font-black text-slate-800 mb-2">{res.percent}%</div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden max-w-md mx-auto border border-slate-200">
+                      <div className="bg-gradient-to-r from-teal-500 to-emerald-500 h-full transition-all duration-1000" style={{ width: `${res.percent}%` }}></div>
+                    </div>
+                  </div>
+
+                  <div className="bg-teal-50 border border-teal-200 p-6 rounded-2xl mb-8">
+                    <h3 className="text-xl font-bold text-teal-900 mb-2">{res.range.title}</h3>
+                    <p className="text-teal-700 text-sm leading-relaxed">{res.range.description}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Trivia Result View */}
+              {res.type === 'trivia' && (
+                <div className="p-8">
+                  <span className="bg-amber-100 text-amber-800 text-xs font-black px-4 py-1.5 rounded-full">نتيجة التحدي المعرفي</span>
+                  
+                  <div className="my-6">
+                    <div className="text-5xl font-black text-slate-800 mb-1">{res.score} / {res.total}</div>
+                    <div className="text-sm font-bold text-slate-500">نسبة الإجابات الصحيحة: {res.percent}%</div>
+                  </div>
+
+                  {/* Review Questions List */}
+                  <div className="text-right space-y-4 mb-8 max-h-80 overflow-y-auto p-2">
+                    <h4 className="font-bold text-slate-700 text-sm border-b pb-2">مراجعة الأسئلة والإجابات:</h4>
+                    {res.reviewList.map((item, i) => (
+                      <div key={i} className={`p-4 rounded-xl border text-sm ${item.isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+                        <div className="font-bold text-slate-800 mb-1">{i+1}. {item.questionText}</div>
+                        <div className="flex items-center gap-2 text-xs mb-1">
+                          <span>إجابتك:</span>
+                          <span className={`font-bold ${item.isCorrect ? 'text-emerald-700' : 'text-red-700'}`}>{item.userAnswerText}</span>
+                        </div>
+                        {!item.isCorrect && (
+                          <div className="text-xs text-emerald-800 font-bold">
+                            الإجابة الصحيحة: {item.correctAnswerText}
+                          </div>
+                        )}
+                        {item.explanation && (
+                          <div className="text-xs text-slate-500 mt-2 bg-white/60 p-2 rounded-lg">💡 {item.explanation}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Footer Actions */}
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row gap-3 justify-center">
+                <button 
+                  onClick={() => handleStartPlay(activeQuiz)}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow"
+                >
+                  <IconRotateCcw /> إعادة الاختبار
+                </button>
+                <button 
+                  onClick={handleGoHome}
+                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2"
+                >
+                  <IconHome /> العودة للرئيسية
+                </button>
+              </div>
+
+            </div>
+          </div>
+        );
+      };
+
+      return (
+        <div>
+          {currentScreen === 'home' && <HomeScreen />}
+          {currentScreen === 'creator' && <CreatorScreen />}
+          {currentScreen === 'player' && <PlayerScreen />}
+          {currentScreen === 'results' && <ResultsScreen />}
+
+          {/* Delete Confirmation Modal */}
+          {deleteModalQuizId && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl animate-fade-in">
+                <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <IconTrash />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 mb-2">حذف الاختبار؟</h3>
+                <p className="text-slate-500 text-sm mb-6">هل أنت متأكد من رغبتك في حذف هذا الاختبار نهائياً؟ لا يمكن التراجع عن هذه الخطوة.</p>
+                <div className="flex gap-3">
+                  <button onClick={handleConfirmDelete} className="flex-1 bg-red-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-red-700">نعم، حذف</button>
+                  <button onClick={() => setDeleteModalQuizId(null)} className="flex-1 bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl text-sm hover:bg-slate-200">إلغاء</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
