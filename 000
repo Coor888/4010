@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محرك فهرسة نقاط القوة الشامل</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Tajawal', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#0ea5e9',
+                        secondary: '#10b981',
+                        dark: '#1e293b',
+                        light: '#f8fafc',
+                        bonus: '#f59e0b', // Amber/Gold for bonus
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Tajawal', sans-serif; background-color: #f1f5f9; }
+        .slider-custom {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #e2e8f0;
+            outline: none;
+            opacity: 0.9;
+            transition: opacity .2s;
+        }
+        .slider-custom::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #0ea5e9;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            transition: 0.2s;
+        }
+        .slider-custom.bonus-slider::-webkit-slider-thumb {
+            background: #f59e0b;
+        }
+        .slider-custom::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #0ea5e9;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .slider-custom.bonus-slider::-moz-range-thumb {
+            background: #f59e0b;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .score-circle {
+            background: conic-gradient(#0ea5e9 var(--score), #e2e8f0 0deg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s ease;
+        }
+        .score-inner {
+            background-color: white;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="text-dark min-h-screen pb-12">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm py-4 mb-8">
+        <div class="container mx-auto px-4 flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                محرك فهرسة نقاط القوة
+            </h1>
+            <button onclick="clearHistory()" class="text-sm text-red-500 hover:text-red-700 font-medium">مسح السجل</button>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 max-w-4xl">
+        
+        <!-- View 1: Intro -->
+        <div id="view-intro" class="view-section active glass-panel rounded-2xl p-8 text-center max-w-2xl mx-auto mt-12">
+            <div class="mb-6 text-primary flex justify-center">
+                <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <h2 class="text-3xl font-bold mb-4">التقييم الشامل لنقاط القوة</h2>
+            <p class="text-gray-600 mb-8 leading-relaxed text-lg">
+                نظام دقيق يعتمد على خوارزميات رياضية لتقييم صحتك البيولوجية، والنفسية، والمهنية، والاجتماعية، إلى جانب مؤشرات الإنجاز والبونص والقيادة.
+            </p>
+            <button onclick="switchView('view-biometrics')" class="bg-primary hover:bg-sky-600 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:shadow-xl transition-all w-full md:w-auto">
+                بدء التقييم الآن
+            </button>
+        </div>
+
+        <!-- View 2: Biometrics -->
+        <div id="view-biometrics" class="view-section glass-panel rounded-2xl p-6 md:p-10 shadow-sm">
+            <h2 class="text-2xl font-bold mb-6 text-primary border-b pb-4">البيانات الحيوية الأساسية</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">العمر (سنوات)</label>
+                    <input type="number" id="input_age" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="مثال: 30" min="15" max="100">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">الوزن (كغ)</label>
+                    <input type="number" id="input_weight" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="مثال: 75" min="30" max="250">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">الطول (سم)</label>
+                    <input type="number" id="input_height" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="مثال: 175" min="100" max="250">
+                </div>
+            </div>
+            <div class="flex justify-between items-center mt-8">
+                <button onclick="switchView('view-intro')" class="text-gray-500 hover:text-gray-800 font-bold py-2 px-6">رجوع</button>
+                <button onclick="validateAndNext('view-sliders')" class="bg-primary hover:bg-sky-600 text-white font-bold py-3 px-8 rounded-full shadow-md transition-all">التالي</button>
+            </div>
+            <p id="bio_error" class="text-red-500 text-sm mt-4 hidden">يرجى إدخال جميع البيانات الحيوية بشكل صحيح.</p>
+        </div>
+
+        <!-- View 3: Sliders Forms -->
+        <div id="view-sliders" class="view-section glass-panel rounded-2xl p-6 md:p-10 shadow-sm">
+            <h2 class="text-2xl font-bold mb-8 text-primary border-b pb-4">تقييم المجالات الحياتية (0 - 100)</h2>
+            
+            <div class="space-y-12">
+                <!-- Domain 1: Biological -->
+                <div class="bg-blue-50/50 p-6 rounded-xl border border-blue-100">
+                    <h3 class="text-xl font-bold mb-4 text-blue-800 flex items-center gap-2">
+                        <span class="bg-blue-200 text-blue-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">35%</span>
+                        المجال البيولوجي
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">الصحة العامة <span class="val-display text-primary font-bold">50</span></label>
+                            <input type="range" id="val_health" min="0" max="100" value="50" class="slider-custom" oninput="updateVal(this)">
+                        </div>
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">النوم <span class="val-display text-primary font-bold">50</span></label>
+                            <input type="range" id="val_sleep" min="0" max="100" value="50" class="slider-custom" oninput="updateVal(this)">
+                        </div>
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">التغذية <span class="val-display text-primary font-bold">50</span></label>
+                            <input type="range" id="val_nutrition" min="0" max="100" value="50" class="slider-custom" oninput="updateVal(this)">
+                        </div>
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">الحركة والنشاط <span class="val-display text-primary font-bold">50</span></label>
+                            <input type="range" id="val_activity" min="0" max="100" value="50" class="slider-custom" oninput="updateVal(this)">
+                        </div>
+                        <div class="slider-group md:col-span-2">
+                            <label class="flex justify-between font-medium mb-2">شرب الماء <span class="val-display text-primary font-bold">50</span></label>
+                            <input type="range" id="val_water" min="0" max="100" value="50" class="slider-custom" oninput="updateVal(this)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domain 2: Professional & Mental -->
+                <div class="bg-emerald-50/50 p-6 rounded-xl border border-emerald-100">
+                    <h3 class="text-xl font-bold mb-4 text-emerald-800 flex items-center gap-2">
+                        <span class="bg-emerald-200 text-emerald-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">45%</span>
+                        المجال المهني والنفسي
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">الأمور المالية <span class="val-display text-emerald-600 font-bold">50</span></label>
+                            <input type="range" id="val_finance" min="0" max="100" value="50" class="slider-custom" oninput="updateVal(this)">
+                        </div>
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">الحالة النفسية <span class="val-display text-emerald-600 font-bold">50</span></label>
+                            <input type="range" id="val_psycho" min="0" max="100" value="50" class="slider-custom" oninput="updateVal(this)">
+                        </div>
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">إدارة التوتر <span class="val-display text-emerald-600 font-bold">50</span></label>
+                            <input type="range" id="val_stress" min="0" max="100" value="50" class="slider-custom" oninput="updateVal(this)">
+                        </div>
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">المهارات <span class="val-display text-emerald-600 font-bold">50</span></label>
+                            <input type="range" id="val_skills" min="0" max="100" value="50" class="slider-custom" oninput="updateVal(this)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domain 3: Social & Satisfaction -->
+                <div class="bg-purple-50/50 p-6 rounded-xl border border-purple-100">
+                    <h3 class="text-xl font-bold mb-4 text-purple-800 flex items-center gap-2">
+                        <span class="bg-purple-200 text-purple-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">20%</span>
+                        المجال الاجتماعي والرضا
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">الرضى عن الوضع <span class="val-display text-purple-600 font-bold">50</span></label>
+                            <input type="range" id="val_satisfaction" min="0" max="100" value="50" class="slider-custom" oninput="updateVal(this)">
+                        </div>
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">العلاقات <span class="val-display text-purple-600 font-bold">50</span></label>
+                            <input type="range" id="val_relationships" min="0" max="100" value="50" class="slider-custom" oninput="updateVal(this)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domain 4: Bonus (Superpowers) -->
+                <div class="bg-amber-50/50 p-6 rounded-xl border border-amber-200 relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 opacity-10">
+                        <svg class="w-40 h-40 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-amber-800 flex items-center gap-2 relative z-10">
+                        <span class="bg-gradient-to-r from-amber-400 to-amber-600 text-white rounded-full px-4 py-1 flex items-center justify-center text-sm shadow-sm">بونص +200%</span>
+                        القدرات والغاية (اختياري)
+                    </h3>
+                    <p class="text-amber-700 text-sm mb-6 relative z-10">هذه الخانات لا تؤثر سلباً إذا بقيت صفراً، ولكنها تضاعف نتيجتك الإجمالية بشكل إيجابي مذهل عند تفعيلها (تضيف حتى 200 نقطة إضافية).</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">القدرات الخارقة <span class="val-display text-amber-600 font-bold">0</span></label>
+                            <input type="range" id="val_superpower" min="0" max="100" value="0" class="slider-custom bonus-slider bg-amber-200" oninput="updateVal(this)">
+                        </div>
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">الغاية <span class="val-display text-amber-600 font-bold">0</span></label>
+                            <input type="range" id="val_purpose" min="0" max="100" value="0" class="slider-custom bonus-slider bg-amber-200" oninput="updateVal(this)">
+                        </div>
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">التحكم <span class="val-display text-amber-600 font-bold">0</span></label>
+                            <input type="range" id="val_control" min="0" max="100" value="0" class="slider-custom bonus-slider bg-amber-200" oninput="updateVal(this)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domain 5: New Bonus (Achievements, Goals, Impact) +150% -->
+                <div class="bg-teal-50/50 p-6 rounded-xl border border-teal-200 relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 opacity-10">
+                        <svg class="w-40 h-40 text-teal-600" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-teal-800 flex items-center gap-2 relative z-10">
+                        <span class="bg-gradient-to-r from-teal-500 to-emerald-600 text-white rounded-full px-4 py-1 flex items-center justify-center text-sm shadow-sm">بونص إنجاز +150%</span>
+                        الإنجازات، الأهداف والأثر (اختياري)
+                    </h3>
+                    <p class="text-teal-700 text-sm mb-6 relative z-10">قسم يعزز نتيجتك بقوة بناءً على حجم إنجازاتك ووضوح أهدافك وعمق أثرك الإيجابي (يضيف حتى 150 نقطة إضافية).</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">الإنجازات <span class="val-display text-teal-600 font-bold">0</span></label>
+                            <input type="range" id="val_achievements" min="0" max="100" value="0" class="slider-custom bg-teal-200 [&::-webkit-slider-thumb]:bg-teal-600 [&::-moz-range-thumb]:bg-teal-600" oninput="updateVal(this)">
+                        </div>
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">الأهداف <span class="val-display text-teal-600 font-bold">0</span></label>
+                            <input type="range" id="val_goals" min="0" max="100" value="0" class="slider-custom bg-teal-200 [&::-webkit-slider-thumb]:bg-teal-600 [&::-moz-range-thumb]:bg-teal-600" oninput="updateVal(this)">
+                        </div>
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">الأثر <span class="val-display text-teal-600 font-bold">0</span></label>
+                            <input type="range" id="val_impact" min="0" max="100" value="0" class="slider-custom bg-teal-200 [&::-webkit-slider-thumb]:bg-teal-600 [&::-moz-range-thumb]:bg-teal-600" oninput="updateVal(this)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domain 6: Penalty (Dependency) -->
+                <div class="bg-red-50/50 p-6 rounded-xl border border-red-200 relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 opacity-10">
+                        <svg class="w-40 h-40 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-red-800 flex items-center gap-2 relative z-10">
+                        <span class="bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-full px-4 py-1 flex items-center justify-center text-sm shadow-sm">خصم -200%</span>
+                        قيود التبعية (عامل سلبي)
+                    </h3>
+                    <p class="text-red-700 text-sm mb-6 relative z-10">هذه الخانة تخصم من رصيدك الإجمالي بشكل مباشر وعنيف عند تفاقم التبعية (يصل إلى خصم 200 نقطة).</p>
+                    <div class="grid grid-cols-1 md:grid-cols-1 gap-8 relative z-10">
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">التبعية <span class="val-display text-red-600 font-bold">0</span></label>
+                            <input type="range" id="val_dependency" min="0" max="100" value="0" class="slider-custom bg-red-200 [&::-webkit-slider-thumb]:bg-red-600 [&::-moz-range-thumb]:bg-red-600" oninput="updateVal(this)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domain 7: Ultimate Bonus (Leadership) -->
+                <div class="bg-violet-50/50 p-6 rounded-xl border border-violet-200 relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 opacity-10">
+                        <svg class="w-40 h-40 text-violet-500" fill="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-violet-800 flex items-center gap-2 relative z-10">
+                        <span class="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-full px-4 py-1 flex items-center justify-center text-sm shadow-sm">بونص ملكي +500%</span>
+                        القيادة والتأثير (اختياري)
+                    </h3>
+                    <p class="text-violet-700 text-sm mb-6 relative z-10">القيادة الحقيقية تضاعف قيمتك بشكل فائق (تضيف حتى 500 نقطة إضافية للنتيجة).</p>
+                    <div class="grid grid-cols-1 md:grid-cols-1 gap-8 relative z-10">
+                        <div class="slider-group">
+                            <label class="flex justify-between font-medium mb-2">القيادة <span class="val-display text-violet-600 font-bold">0</span></label>
+                            <input type="range" id="val_leadership" min="0" max="100" value="0" class="slider-custom bg-violet-200 [&::-webkit-slider-thumb]:bg-violet-600 [&::-moz-range-thumb]:bg-violet-600" oninput="updateVal(this)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-10">
+                <button onclick="switchView('view-biometrics')" class="text-gray-500 hover:text-gray-800 font-bold py-2 px-6">رجوع</button>
+                <button onclick="processAndShowDashboard()" class="bg-primary hover:bg-sky-600 text-white font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-xl transition-all text-lg">
+                    حساب وتوليد التقرير
+                </button>
+            </div>
+        </div>
+
+        <!-- View 4: Dashboard -->
+        <div id="view-dashboard" class="view-section">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- Main Score Card -->
+                <div class="glass-panel p-6 rounded-2xl flex flex-col items-center justify-center lg:col-span-1 shadow-sm relative overflow-hidden">
+                    <h3 class="text-xl font-bold text-gray-700 mb-6">النتيجة الشاملة</h3>
+                    <div class="score-circle w-48 h-48 relative" id="ui_score_circle">
+                        <div class="score-inner w-40 h-40 flex flex-col items-center justify-center shadow-inner z-10 relative">
+                            <span class="text-5xl font-black text-primary transition-colors duration-500" id="ui_final_score">0.0</span>
+                            <span class="text-sm font-bold text-gray-400 mt-1" id="ui_max_score">نقطة</span>
+                        </div>
+                    </div>
+                    <div id="ui_bonus_badge" class="mt-4 hidden bg-gradient-to-r from-amber-400 to-amber-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
+                        يتضمن نقاط البونص!
+                    </div>
+                    <p id="ui_score_comment" class="mt-4 text-center font-medium text-gray-600 bg-gray-100 px-4 py-2 rounded-lg w-full"></p>
+                </div>
+
+                <!-- BMI & Biometrics Summary -->
+                <div class="glass-panel p-6 rounded-2xl lg:col-span-2 shadow-sm flex flex-col justify-center">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">تحليل البنية الجسدية (BMI)</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-center">
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <span class="block text-sm text-gray-500">العمر</span>
+                            <span class="block text-xl font-bold text-dark" id="ui_dash_age">-</span>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <span class="block text-sm text-gray-500">الوزن</span>
+                            <span class="block text-xl font-bold text-dark" id="ui_dash_weight">-</span>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <span class="block text-sm text-gray-500">الطول</span>
+                            <span class="block text-xl font-bold text-dark" id="ui_dash_height">-</span>
+                        </div>
+                        <div class="bg-sky-50 p-3 rounded-lg border border-sky-100">
+                            <span class="block text-sm text-sky-700">النتيجة (BMI)</span>
+                            <span class="block text-2xl font-black text-primary" id="ui_dash_bmi">-</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border flex flex-col md:flex-row items-center gap-4">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800" id="ui_bmi_status">الحالة: ...</h4>
+                            <p class="text-sm text-gray-600 mt-1" id="ui_bmi_details">تفاصيل التقييم بناءً على العمر والمعايير الطبية.</p>
+                        </div>
+                        <div class="text-left w-full md:w-auto" id="ui_penalty_badge">
+                            <!-- Penalty badge injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Radar Chart (22 Points) -->
+                <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4 text-center">خريطة الرادار الشاملة (22 عنصر)</h3>
+                    <div class="relative w-full aspect-square md:aspect-auto md:h-80">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- History Line Chart -->
+                <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4 text-center">سجل التطور الزمني</h3>
+                    <div class="relative w-full aspect-square md:aspect-auto md:h-80">
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button onclick="switchView('view-sliders')" class="bg-dark hover:bg-gray-800 text-white font-bold py-3 px-10 rounded-full shadow-lg transition-all">
+                    إعادة التقييم
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants & Weights Definitions
+        const WEIGHTS = {
+            biological: {
+                health: 0.10, sleep: 0.10, nutrition: 0.05, activity: 0.05, water: 0.05
+            },
+            professional: {
+                finance: 0.15, psycho: 0.10, stress: 0.10, skills: 0.10
+            },
+            social: {
+                satisfaction: 0.10, relationships: 0.10
+            }
+        };
+
+        // State Variables
+        let chartInstances = { radar: null, line: null };
+        let currentAssessmentData = {};
+
+        // DOM Manipulations
+        function updateVal(slider) {
+            slider.previousElementSibling.querySelector('.val-display').innerText = slider.value;
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function validateAndNext(nextViewId) {
+            const age = document.getElementById('input_age').value;
+            const weight = document.getElementById('input_weight').value;
+            const height = document.getElementById('input_height').value;
+            const errorText = document.getElementById('bio_error');
+            
+            if (!age || !weight || !height || age <= 0 || weight <= 0 || height <= 0) {
+                errorText.classList.remove('hidden');
+            } else {
+                errorText.classList.add('hidden');
+                switchView(nextViewId);
+            }
+        }
+
+        function getIdealBMIRange(age) {
+            if (age >= 18 && age <= 24) return { min: 19, max: 24 };
+            if (age >= 25 && age <= 34) return { min: 20, max: 25 };
+            if (age >= 35 && age <= 44) return { min: 21, max: 26 };
+            if (age >= 45 && age <= 54) return { min: 22, max: 27 };
+            if (age >= 55 && age <= 64) return { min: 23, max: 28 };
+            if (age >= 65) return { min: 24, max: 29 };
+            return { min: 18.5, max: 24.9 }; 
+        }
+
+        function calculateBMILogic(age, weight, heightCm) {
+            const heightM = heightCm / 100;
+            const bmi = weight / (heightM * heightM);
+            const targetRange = getIdealBMIRange(age);
+            
+            let penalty = 0;
+            let deviation = 0;
+            let status = "مثالي";
+            let color = "text-secondary";
+
+            if (bmi < targetRange.min) {
+                deviation = targetRange.min - bmi;
+                status = "نقص في الوزن";
+                color = "text-yellow-500";
+            } else if (bmi > targetRange.max) {
+                deviation = bmi - targetRange.max;
+                if (bmi > 30) {
+                    status = "سمنة";
+                    color = "text-red-500";
+                } else {
+                    status = "وزن زائد";
+                    color = "text-orange-500";
+                }
+            }
+
+            if (deviation > 0) {
+                penalty = Math.min(Math.pow(deviation, 2) * 0.25, 20); 
+            }
+
+            const bmiScore = Math.max(0, 100 - (penalty * 3));
+            const biometricFitness = Math.max(0, 100 - (deviation * 5));
+            const massEquilibrium = bmi >= targetRange.min && bmi <= targetRange.max ? 100 : Math.max(0, 100 - (deviation * 4));
+
+            return {
+                bmi: parseFloat(bmi.toFixed(1)),
+                penalty: parseFloat(penalty.toFixed(2)),
+                status,
+                color,
+                targetRange,
+                derivedMetrics: [bmiScore, biometricFitness, massEquilibrium]
+            };
+        }
+
+        function processAndShowDashboard() {
+            // 1. Gather Inputs
+            const inputs = {
+                age: parseFloat(document.getElementById('input_age').value),
+                weight: parseFloat(document.getElementById('input_weight').value),
+                height: parseFloat(document.getElementById('input_height').value),
+                
+                health: parseFloat(document.getElementById('val_health').value),
+                sleep: parseFloat(document.getElementById('val_sleep').value),
+                nutrition: parseFloat(document.getElementById('val_nutrition').value),
+                activity: parseFloat(document.getElementById('val_activity').value),
+                water: parseFloat(document.getElementById('val_water').value),
+                
+                finance: parseFloat(document.getElementById('val_finance').value),
+                psycho: parseFloat(document.getElementById('val_psycho').value),
+                stress: parseFloat(document.getElementById('val_stress').value),
+                skills: parseFloat(document.getElementById('val_skills').value),
+                
+                satisfaction: parseFloat(document.getElementById('val_satisfaction').value),
+                relationships: parseFloat(document.getElementById('val_relationships').value),
+
+                // Bonus Inputs (Superpowers)
+                superpower: parseFloat(document.getElementById('val_superpower').value),
+                purpose: parseFloat(document.getElementById('val_purpose').value),
+                control: parseFloat(document.getElementById('val_control').value),
+                
+                // New Bonus Inputs (Achievements, Goals, Impact) +150%
+                achievements: parseFloat(document.getElementById('val_achievements').value),
+                goals: parseFloat(document.getElementById('val_goals').value),
+                impact: parseFloat(document.getElementById('val_impact').value),
+
+                // Penalty & Ultimate Bonus Inputs
+                dependency: parseFloat(document.getElementById('val_dependency').value),
+                leadership: parseFloat(document.getElementById('val_leadership').value)
+            };
+
+            // 2. Base Mathematical Weighted Sum (Max 100)
+            let baseScore = 
+                (inputs.health * WEIGHTS.biological.health) +
+                (inputs.sleep * WEIGHTS.biological.sleep) +
+                (inputs.nutrition * WEIGHTS.biological.nutrition) +
+                (inputs.activity * WEIGHTS.biological.activity) +
+                (inputs.water * WEIGHTS.biological.water) +
+                (inputs.finance * WEIGHTS.professional.finance) +
+                (inputs.psycho * WEIGHTS.professional.psycho) +
+                (inputs.stress * WEIGHTS.professional.stress) +
+                (inputs.skills * WEIGHTS.professional.skills) +
+                (inputs.satisfaction * WEIGHTS.social.satisfaction) +
+                (inputs.relationships * WEIGHTS.social.relationships);
+
+            // 3. Biometric Logic & Penalties
+            const bioLogic = calculateBMILogic(inputs.age, inputs.weight, inputs.height);
+            let normalScore = baseScore - bioLogic.penalty;
+            normalScore = Math.max(0, Math.min(100, normalScore)); // Base constraint [0-100]
+
+            // 4. First Bonus Calculation (Max 200 additional points)
+            const averageBonusPercentage = (inputs.superpower + inputs.purpose + inputs.control) / 300; 
+            const bonusPoints = averageBonusPercentage * 200;
+
+            // 5. New Bonus Calculation (Achievements, Goals, Impact) (Max 150 additional points)
+            const averageAchievementPercentage = (inputs.achievements + inputs.goals + inputs.impact) / 300;
+            const achievementBonus = averageAchievementPercentage * 150;
+
+            // 6. Dependency Penalty (-200%)
+            const dependencyPenalty = (inputs.dependency / 100) * 200;
+
+            // 7. Leadership Bonus (+500%)
+            const leadershipBonus = (inputs.leadership / 100) * 500;
+
+            // 8. Final Aggregation
+            let finalScore = normalScore + bonusPoints + achievementBonus - dependencyPenalty + leadershipBonus;
+            
+            // Limit to absolute maximum [0, 950]
+            finalScore = Math.max(0, Math.min(950, finalScore));
+
+            currentAssessmentData = {
+                date: new Date().toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }),
+                score: parseFloat(finalScore.toFixed(1)),
+                normalScore: parseFloat(normalScore.toFixed(1)),
+                bonusPoints: parseFloat(bonusPoints.toFixed(1)),
+                achievementBonus: parseFloat(achievementBonus.toFixed(1)),
+                dependencyPenalty: parseFloat(dependencyPenalty.toFixed(1)),
+                leadershipBonus: parseFloat(leadershipBonus.toFixed(1)),
+                inputs: inputs,
+                bio: bioLogic
+            };
+
+            saveToHistory(currentAssessmentData);
+            renderDashboardUI(currentAssessmentData);
+            switchView('view-dashboard');
+            renderCharts(currentAssessmentData);
+        }
+
+        function saveToHistory(data) {
+            let history = JSON.parse(localStorage.getItem('powerPointsHistory')) || [];
+            history.push({ date: data.date, score: data.score, timestamp: Date.now() });
+            localStorage.setItem('powerPointsHistory', JSON.stringify(history));
+        }
+
+        function clearHistory() {
+            if(confirm('هل أنت متأكد من مسح جميع السجلات التاريخية؟')) {
+                localStorage.removeItem('powerPointsHistory');
+                if(document.getElementById('view-dashboard').classList.contains('active')){
+                    switchView('view-intro');
+                }
+                alert('تم مسح السجل بنجاح.');
+            }
+        }
+
+        function renderDashboardUI(data) {
+            const uiScore = document.getElementById('ui_final_score');
+            const scoreCircle = document.getElementById('ui_score_circle');
+            const bonusBadge = document.getElementById('ui_bonus_badge');
+            
+            uiScore.innerText = data.score;
+
+            if (data.score > 100) {
+                uiScore.classList.remove('text-primary', 'text-amber-500');
+                uiScore.classList.add('text-violet-600');
+                scoreCircle.style.background = `conic-gradient(#8b5cf6 100%, #e2e8f0 0deg)`;
+                scoreCircle.style.boxShadow = "0 0 25px 8px rgba(139, 92, 246, 0.4)";
+                bonusBadge.classList.remove('hidden', 'from-amber-400', 'to-amber-600', 'from-gray-600', 'to-gray-800');
+                bonusBadge.classList.add('from-violet-500', 'to-fuchsia-500');
+                
+                let parts = [];
+                if(data.leadershipBonus > 0) parts.push(`قيادة +${data.leadershipBonus}`);
+                if(data.bonusPoints > 0) parts.push(`قدرات +${data.bonusPoints}`);
+                if(data.achievementBonus > 0) parts.push(`إنجازات +${data.achievementBonus}`);
+                if(data.dependencyPenalty > 0) parts.push(`تبعية -${data.dependencyPenalty}`);
+                
+                bonusBadge.innerText = `يتضمن: ${parts.join(' | ')}`;
+            } else {
+                let displayPercent = Math.max(0, Math.min(100, data.score));
+                uiScore.className = "text-5xl font-black transition-colors duration-500 text-primary";
+                scoreCircle.style.background = `conic-gradient(#0ea5e9 ${displayPercent}%, #e2e8f0 0deg)`;
+                scoreCircle.style.boxShadow = "none";
+                
+                if (data.dependencyPenalty > 0 || data.leadershipBonus > 0 || data.bonusPoints > 0 || data.achievementBonus > 0) {
+                    bonusBadge.classList.remove('hidden', 'from-amber-400', 'to-amber-600', 'from-violet-500', 'to-fuchsia-500');
+                    bonusBadge.classList.add('from-gray-600', 'to-gray-800');
+                    
+                    let parts = [];
+                    if(data.leadershipBonus > 0) parts.push(`قيادة +${data.leadershipBonus}`);
+                    if(data.bonusPoints > 0) parts.push(`قدرات +${data.bonusPoints}`);
+                    if(data.achievementBonus > 0) parts.push(`إنجازات +${data.achievementBonus}`);
+                    if(data.dependencyPenalty > 0) parts.push(`تبعية -${data.dependencyPenalty}`);
+                    bonusBadge.innerText = `المؤثرات: ${parts.join(' | ')}`;
+                } else {
+                    bonusBadge.classList.add('hidden');
+                }
+            }
+            
+            let comment = "تحتاج إلى مراجعة توازنك العام.";
+            if (data.score >= 700) comment = "كيان استثنائي أسطوري! سيطرة مطلقة، إنجازات وتأثير لا محدود.";
+            else if (data.score >= 400) comment = "قائد فذ ومحقق للإنجازات الكبرى! أنت تصنع واقعاً مختلفاً لمن حولك.";
+            else if (data.score >= 200) comment = "مستوى خارق متقدم! غاية وإنجازات وقدرات تتجاوز الحدود الطبيعية.";
+            else if (data.score >= 100) comment = "توازن مثالي مع انطلاق قوي في مسار البونص والإنجازات.";
+            else if (data.score >= 80) comment = "أداء ممتاز وتوازن رائع في حياتك الأساسية!";
+            else if (data.score >= 60) comment = "أداء جيد، مع وجود مساحة للتحسين في بعض الجوانب.";
+            else if (data.score >= 40) comment = "أنت في نقطة حرجة، انتبه لقيود التبعية ونقاط الضعف التي تستنزفك.";
+            else comment = "التبعية تسيطر عليك، تحتاج لنهضة فورية وكسر هذه القيود!";
+            
+            document.getElementById('ui_score_comment').innerText = comment;
+
+            // Update Biometrics
+            document.getElementById('ui_dash_age').innerText = data.inputs.age;
+            document.getElementById('ui_dash_weight').innerText = data.inputs.weight;
+            document.getElementById('ui_dash_height').innerText = data.inputs.height;
+            document.getElementById('ui_dash_bmi').innerText = data.bio.bmi;
+            
+            const bmiStatusEl = document.getElementById('ui_bmi_status');
+            bmiStatusEl.innerText = `الحالة: ${data.bio.status}`;
+            bmiStatusEl.className = `font-bold text-lg ${data.bio.color}`;
+            document.getElementById('ui_bmi_details').innerText = `المعدل المستهدف لعمرك (${data.inputs.age} سنة) هو بين ${data.bio.targetRange.min} و ${data.bio.targetRange.max}`;
+
+            const badgeContainer = document.getElementById('ui_penalty_badge');
+            if (data.bio.penalty > 0) {
+                badgeContainer.innerHTML = `<span class="bg-red-100 text-red-700 font-bold px-4 py-2 rounded-lg text-sm border border-red-200 block">تم خصم ${data.bio.penalty} نقطة بسبب عدم التناسب</span>`;
+            } else {
+                badgeContainer.innerHTML = `<span class="bg-green-100 text-green-700 font-bold px-4 py-2 rounded-lg text-sm border border-green-200 block">توازن جسدي مثالي (بدون خصومات)</span>`;
+            }
+        }
+
+        function renderCharts(data) {
+            if (chartInstances.radar) chartInstances.radar.destroy();
+            if (chartInstances.line) chartInstances.line.destroy();
+
+            Chart.defaults.font.family = "'Tajawal', sans-serif";
+            Chart.defaults.color = '#64748b';
+
+            // 1. Radar Chart (25 Points: 11 inputs + 3 bio derived + 3 superpower + 3 achievement + 1 penalty + 1 leadership)
+            const ctxRadar = document.getElementById('radarChart').getContext('2d');
+            
+            const radarLabels = [
+                'الصحة العامة', 'النوم', 'التغذية', 'الحركة', 'الماء',
+                'المالية', 'النفسية', 'إدارة التوتر', 'المهارات',
+                'الرضى العام', 'العلاقات', 
+                'مؤشر الكتلة العام', 'التوافق العمري', 'توازن الكتلة',
+                'القدرات الخارقة', 'الغاية', 'التحكم',
+                'الإنجازات', 'الأهداف', 'الأثر',
+                'التبعية', 'القيادة'
+            ];
+
+            const radarDataPoints = [
+                data.inputs.health, data.inputs.sleep, data.inputs.nutrition, data.inputs.activity, data.inputs.water,
+                data.inputs.finance, data.inputs.psycho, data.inputs.stress, data.inputs.skills,
+                data.inputs.satisfaction, data.inputs.relationships,
+                data.bio.derivedMetrics[0], data.bio.derivedMetrics[1], data.bio.derivedMetrics[2],
+                data.inputs.superpower, data.inputs.purpose, data.inputs.control,
+                data.inputs.achievements, data.inputs.goals, data.inputs.impact,
+                data.inputs.dependency, data.inputs.leadership
+            ];
+
+            chartInstances.radar = new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: radarLabels,
+                    datasets: [{
+                        label: 'مؤشراتك الحالية',
+                        data: radarDataPoints,
+                        backgroundColor: 'rgba(14, 165, 233, 0.2)',
+                        borderColor: 'rgba(14, 165, 233, 1)',
+                        pointBackgroundColor: radarDataPoints.map((_, i) => {
+                            if(i >= 14 && i <= 16) return '#f59e0b'; // Amber for Superpowers
+                            if(i >= 17 && i <= 19) return '#0d9488'; // Teal for Achievements
+                            if(i === 20) return '#ef4444'; // Red for Dependency
+                            if(i === 21) return '#8b5cf6'; // Violet for Leadership
+                            return 'rgba(14, 165, 233, 1)';
+                        }),
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 100,
+                            ticks: { stepSize: 20, display: false },
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            pointLabels: {
+                                font: { size: 9, family: 'Tajawal', weight: 'bold' },
+                                color: (ctx) => {
+                                    if(ctx.index >= 14 && ctx.index <= 16) return '#d97706';
+                                    if(ctx.index >= 17 && ctx.index <= 19) return '#0f766e';
+                                    if(ctx.index === 20) return '#b91c1c';
+                                    if(ctx.index === 21) return '#6d28d9';
+                                    return '#475569';
+                                }
+                            }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // 2. Line Chart (History Progression)
+            const ctxLine = document.getElementById('lineChart').getContext('2d');
+            const historyRaw = JSON.parse(localStorage.getItem('powerPointsHistory')) || [];
+            
+            historyRaw.sort((a, b) => a.timestamp - b.timestamp);
+            
+            const historyLabels = historyRaw.map(item => item.date);
+            const historyData = historyRaw.map(item => item.score);
+
+            if(historyLabels.length === 1) {
+                historyLabels.unshift('السابق');
+                historyData.unshift(50.1); 
+            }
+
+            chartInstances.line = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: historyLabels,
+                    datasets: [{
+                        label: 'النتيجة الإجمالية',
+                        data: historyData,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#8b5cf6',
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { 
+                            min: 0, 
+                            max: Math.max(100, Math.max(...historyData) + 50),
+                            grid: { color: 'rgba(0,0,0,0.05)' } 
+                        },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { titleFont: { family: 'Tajawal' }, bodyFont: { family: 'Tajawal' } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
